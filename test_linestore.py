@@ -1,6 +1,6 @@
 import pytest
 
-from linestore import LineStore
+from linestore import LineStore, polyline2linesegments
 from pygame.math import Vector2
 
 
@@ -96,3 +96,78 @@ def test_linestore_add_simplify2():
     assert (4, 10) in ls.lines[5]
 
 
+def test_linestore_get_lines_horizontal():
+    line1 = ((0, 1), (4, 1))
+    line2 = ((5, 1), (7, 1))
+    line3 = ((6, 2), (7, 2))
+    line4 = ((3, 5), (6, 5))
+    ls = LineStore('horizontal')
+    ls.add(line1)
+    ls.add(line2)
+    ls.add(line3)
+    ls.add(line4)
+    assert len(ls.get_lines(1)) == 2
+    assert line1 in ls.get_lines(1)
+    assert line2 in ls.get_lines(1)
+    assert ls.get_lines((5)) == [line4]
+
+
+def test_linestore_get_lines_vertical():
+    line1 = ((5, 1), (5, 4))
+    line2 = ((5, 6), (5, 10))
+    line3 = ((6, 2), (6, 10))
+    line4 = ((7, 0), (7, 5))
+    ls = LineStore('vertical')
+    ls.add(line1)
+    ls.add(line2)
+    ls.add(line3)
+    ls.add(line4)
+    assert len(ls.get_lines(5)) == 2
+    assert line1 in ls.get_lines(5)
+    assert line2 in ls.get_lines(5)
+
+
+def test_linestore_get_near_horizontal():
+    line1 = ((0, 1), (4, 1))
+    line2 = ((5, 1), (7, 1))
+    line3 = ((6, 2), (7, 2))
+    line4 = ((3, 5), (6, 5))
+    ls = LineStore('horizontal')
+    ls.add(line1)
+    ls.add(line2)
+    ls.add(line3)
+    ls.add(line4)
+    assert len(ls.get_near(1)) == 3
+    assert line1 in ls.get_near(1)
+    assert line2 in ls.get_near(1)
+    assert line2 in ls.get_near(1)
+    assert line4 not in ls.get_near(1)
+
+
+def test_linestore_get_near_vertical():
+    line1 = ((5, 1), (5, 4))
+    line2 = ((5, 6), (5, 10))
+    line3 = ((6, 2), (6, 10))
+    line4 = ((7, 0), (7, 5))
+    ls = LineStore('vertical')
+    ls.add(line1)
+    ls.add(line2)
+    ls.add(line3)
+    ls.add(line4)
+    lines_near_6 = ls.get_near(6)
+    assert lines_near_6[0] == line3
+    assert lines_near_6[1] == line1
+    assert lines_near_6[2] == line2
+    assert lines_near_6[3] == line4
+
+
+def test_polyline2linesegments():
+    pl = [(0, 0), (0, 2), (3, 2), (3, 5)]
+    expected = [((0, 0), (0, 2)), ((0, 2), (3, 2)), ((3, 2), (3, 5))]
+    assert polyline2linesegments(pl) == expected
+
+
+def test_polyline2linesegments_requires_more_than_1_point():
+    pl = [(10, 10)]
+    with pytest.raises(ValueError) as exc:
+        polyline2linesegments(pl)
