@@ -1,31 +1,12 @@
-from collections import deque, defaultdict
+from collections import deque
 from random import randint, random
 
 import pygame
 from acrylic import Color
 
-WIDTH = 800
-HEIGHT = 600
-LEFTMARGIN = 5
-RIGHTMARGIN = 5
-TOPMARGIN = 5
-BOTTOMMARGIN = 5
-TRAIL_LENGTH = 40
-PLAYER_SPEED = 0.08
-
-key_map = {
-    pygame.K_RIGHT: 'right',
-    pygame.K_LEFT: 'left',
-    pygame.K_DOWN: 'down',
-    pygame.K_UP: 'up',
-}
-directions = {
-    'standstill': pygame.math.Vector2(0, 0),
-    'right': pygame.math.Vector2(1, 0),
-    'left': pygame.math.Vector2(-1, 0),
-    'down': pygame.math.Vector2(0, 1),
-    'up': pygame.math.Vector2(0, -1),
-}
+from common import WIDTH, HEIGHT, LEFTMARGIN, RIGHTMARGIN, TOPMARGIN, BOTTOMMARGIN, TRAIL_LENGTH, \
+    PLAYER_SPEED, key_map, directions
+from linestore import LineStore, decompose_rects
 
 clock = pygame.time.Clock()
 
@@ -102,65 +83,6 @@ class Qix:
                 width = 1
 
 
-def simplify_one_coord(coords):
-    """
-    Merge all overlapping line segments in a list of line segments on the same horizontal or vertical line.
-
-    The line segments are given only by their start and end coordinates in one coordinate direction because
-    they are assumed to share the other cooordinate. (Otherwise they could not overlap, since we are only
-    considering horizontal and vertical lines.)
-
-    :param coords: list of pairs (start, end) in one coordinate direction
-    :return: list of (start, end) of maximal contiguous line segments
-    """
-    result = []
-    lines = sorted(coords)
-    # Lexicographic ordering implies that the lines are sorted by their starting points,
-    # so at a given y coordinate, we get the line segments from left to right. (Top to bottom for verticals)
-    # We merge overlapping line segments, so that we create (left to right) one maximal contiguous segment.
-    # If - after this operation - two consecutive line segments do not overlap, there is a true gap.
-    line_old = lines[0]  # get first element
-    for line in lines:
-        if line_old[1] < line[0]:  # disjoint ==> save line_old and continue with current line segment
-            result.append(line_old)
-            line_old = line
-        else:  # overlapping ==> join lines and continue with merged line segment
-            line_old = (line_old[0], line[1])
-    else:
-        result.append(line_old)  # save the last segment
-    return result
-
-
-def decompose_rects(*rects: pygame.Rect):
-    # We collect horizontals and verticals separately,
-    # and we collect them in dictionaries indexed by their position:
-    # horizontals by y coordinate (because horizontals at different y coordinates can never intersect or overlap),
-    # and verticals by x coordinate
-    # We store only the 'other' coordinate, so for horizontals we have a map  y -> (x0,x1)
-    # Finally, we only have to check each dictionary entry for overlaps.
-    horizontals = defaultdict(list)
-    verticals = defaultdict(list)
-    for r in rects:
-        # We insert each side so that it runs from left to right or top to bottom
-        # (x_start <= x_end && y_start <= y_end)
-        horizontals[r.y].append((r.left, r.right))
-        horizontals[r.y].append((r.left, r.right))
-        verticals[r.x].append((r.top, r.bottom))
-        verticals[r.x].append((r.top, r.bottom))
-
-    # Clean up lines so that we keep only the union of overlapping lines
-    result_h = {}
-    for y, hori in horizontals.items():
-        result_h[y] = [((line[0], y), (line[1], y))
-                       for line in simplify_one_coord(hori)]
-    result_v = {}
-    for x, verti in verticals.items():
-        result_v[x] = [((x, line[0]), (x, line[1]))
-                       for line in simplify_one_coord(verti)]
-
-    return result_h, result_v
-
-
 class Player(pygame.sprite.Sprite):
     def __init__(self, border, boxes, stix):
         super().__init__()
@@ -177,6 +99,7 @@ class Player(pygame.sprite.Sprite):
         self._safe_lines_h, self._safe_lines_v = decompose_rects(border, *boxes)
         print(f"Safe Horizontals: {self._safe_lines_h}")
         print(f"Safe Verticals: {self._safe_lines_v}")
+        self.state = 'safe'
 
     def move(self, dt):
         new_rect = self.rect.move(dt * self.speed * self.direction)
@@ -195,6 +118,18 @@ class Player(pygame.sprite.Sprite):
         # TODO: prevent illegal moves (backing up, returning on unfinished 'stix')
 
     def update(self, dt, direction) -> None:
+        # if direction changes:
+        # b) check if safe line
+        #    - allowed if near branching of safe line
+        #    - allowed if turning into free space ==> new stix
+        # a) check if allowed
+        #    - almost always allowed for stix (not on safe line)
+        # c) or if new stix
+        #
+        # if old direction is 'up' or 'down':
+        #     check horizontal safe lines near current position
+        # if old direction is 'left' or 'right':
+        #     check vertical safe lines near current position
         self.move(dt)
         self.direction = direction
         # TODO: draw 'stix'
@@ -203,13 +138,27 @@ class Player(pygame.sprite.Sprite):
 
 class QixGame:
     def __init__(self):
+        """
+        All lines (paths) drawn by the player are stored
+        in dictionaries separated into verticals and horizontals:
+        + safe: lines around closed areas
+        + unsafe: line segments of the shape the player is currently drawing
+
+        """
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         self.border = self.screen.get_rect()
         self.border.x += LEFTMARGIN
         self.border.y += TOPMARGIN
         self.border.width -= LEFTMARGIN + RIGHTMARGIN
         self.border.height -= TOPMARGIN + BOTTOMMARGIN
+        self.safe_verticals = LineStore('vertical')
+        self.safe_horizontals = LineStore('horizontal')
+        self.unsafe_verticals = LineStore('vertical')
+        self.unsafe_horizontals = LineStore('horizontal')
         self.boxes = []  # keep track of surrounded areas
+        # stix is a polyline (pygame.draw.lines()) where all segments are
+        # either horizontal or vertical.
+        # Only one Stix polyline can exist at any one time
         self.stix = []  # keep track of unfinished player track
         self.qix = Qix(self.screen)
         self.player = pygame.sprite.Group(Player(self.border, self.boxes, self.stix))
