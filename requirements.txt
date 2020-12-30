@@ -1,0 +1,2 @@
+acrylic==0.2.2
+pygame==2.0.1
