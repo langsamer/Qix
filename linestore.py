@@ -25,7 +25,8 @@ class LineStore:
             for k in [key, key - 1, key + 1, key - 2, key + 2]
         ])
 
-    def add(self, line: Tuple[Union[Tuple[int], pygame.math.Vector2]]):
+    def add(self, line: Tuple[Union[Tuple[int, int], pygame.math.Vector2],
+                              Union[Tuple[int, int], pygame.math.Vector2]]):
         if self.dim == 'horizontal':
             key = line[0][1]  # index by y coordinate
             value = (line[0][0], line[1][0])  # store x_0 and x_1
