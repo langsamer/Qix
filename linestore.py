@@ -1,4 +1,3 @@
-import itertools
 from collections import defaultdict
 from typing import Tuple, Union, Optional
 
@@ -34,9 +33,9 @@ class LineStore:
         Closer matches are returned first in the list.
         """
         return [
-                line
-                for k in [key, key - 1, key + 1, key - 2, key + 2]
-                for line in self.get_lines(k)
+            line
+            for k in [key, key - 1, key + 1, key - 2, key + 2]
+            for line in self.get_lines(k)
         ]
 
     def add(self, line: Tuple[Union[Tuple[int, int], pygame.math.Vector2],
@@ -132,9 +131,73 @@ def decompose_polyline(polyline,
 
 
 def polyline2linesegments(polyline):
+    """Convert a polyline to a sequence of lines"""
     if len(polyline) < 2:
         raise ValueError("A polyline must have at least length 2")
     result = []
     for p0, p1 in zip(polyline, polyline[1:]):
         result.append((p0, p1))
     return result
+
+
+def line_intersect(line, linestore: LineStore, ignore=None):
+    """Check if a line segment in a LineStore intersects with the given line
+
+    Currently works for horizontal and vertical lines only.
+
+    Returns an empty tuple if no intersection,
+    a point (x, y) for a point intersection
+    a line ((x0, y0), (x1, y1)) for an overlap
+    """
+    x_start, y_start = line[0]
+    x_end, y_end = line[1]
+    if y_start == y_end:
+        mode = 'horizontal'
+        x_start, x_end = sorted((x_start, x_end))
+    elif x_start == x_end:
+        mode = 'vertical'
+        y_start, y_end = sorted((y_start, y_end))
+    else:
+        raise ValueError("line_intersect can only check horizontal and vertical lines")
+
+    if mode == 'horizontal' and linestore.dim == 'horizontal':
+        lines = linestore.get_lines(y_start)
+        for curr_l in lines:
+            x0, x1 = sorted((curr_l[0][0], curr_l[1][0]))
+            i_x0 = max(x0, x_start)
+            i_x1 = min(x1, x_end)
+            if i_x0 == i_x1 and (i_x0, y_start) != ignore:
+                return i_x0, y_start
+            elif i_x0 < i_x1:
+                return (i_x0, y_start), (i_x1, y_start)
+
+    if mode == 'vertical' and linestore.dim == 'vertical':
+        lines = linestore.get_lines(x_start)
+        for curr_l in lines:
+            y0, y1 = sorted((curr_l[0][1], curr_l[1][1]))
+            i_y0 = max(y0, y_start)
+            i_y1 = min(y1, y_end)
+            if i_y0 == i_y1 and (x_start, i_y0) != ignore:
+                return x_start, i_y0
+            if i_y0 < i_y1:
+                return (x_start, i_y0), (x_start, i_y1)
+
+    if mode == 'horizontal' and linestore.dim == 'vertical':
+        y_coord = y_start
+        for x_coord in range(x_start, x_end + 1):
+            lines = linestore.get_lines(x_coord)
+            for curr_l in lines:
+                y0, y1 = sorted((curr_l[0][1], curr_l[1][1]))
+                if y0 <= y_coord <= y1 and (x_coord, y_coord) != ignore:
+                    return x_coord, y_coord
+
+    if mode == 'vertical' and linestore.dim == 'horizontal':
+        x_coord = x_start
+        for y_coord in range(y_start, y_end + 1):
+            lines = linestore.get_lines(y_coord)
+            for curr_l in lines:
+                x0, x1 = sorted((curr_l[0][0], curr_l[1][0]))
+                if x0 <= x_coord <= x1 and (x_coord, y_coord) != ignore:
+                    return x_coord, y_coord
+
+    return ()

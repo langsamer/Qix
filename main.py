@@ -6,7 +6,7 @@ from acrylic import Color
 
 from common import WIDTH, HEIGHT, LEFTMARGIN, RIGHTMARGIN, TOPMARGIN, BOTTOMMARGIN, TRAIL_LENGTH, \
     PLAYER_SPEED, key_map, directions
-from linestore import LineStore, decompose_rects
+from linestore import LineStore, decompose_rects, line_intersect, decompose_polyline
 
 clock = pygame.time.Clock()
 
@@ -84,38 +84,57 @@ class Qix:
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, border, boxes, stix):
+    def __init__(self, border, safe_paths, stix):
         super().__init__()
         self.image = pygame.surface.Surface((10, 10))
         self.rect = self.image.get_rect()
         pygame.draw.rect(self.image, (100, 100, 100), self.rect, width=1)
         self.rect.center = border.midbottom
-        print(type(self.rect.center))
+        # print(type(self.rect.center))
         self.speed = PLAYER_SPEED
-        self.direction = directions['standstill']
+        self.direction = 'standstill'
+        self.standstill = True
         self.boundary = border
-        self.paths = boxes
+        self.paths = safe_paths
         self.stix = stix
-        self._safe_lines_h, self._safe_lines_v = decompose_rects(border, *boxes)
-        print(f"Safe Horizontals: {self._safe_lines_h}")
-        print(f"Safe Verticals: {self._safe_lines_v}")
-        self.state = 'safe'
+        self.safe = True
 
     def move(self, dt):
-        new_rect = self.rect.move(dt * self.speed * self.direction)
-        # Keep player inside screen
-        center = pygame.math.Vector2(new_rect.center)
-        if center.x < self.boundary.left:
-            center.x = self.boundary.left
-        if center.x > self.boundary.right:
-            center.x = self.boundary.right
-        if center.y < self.boundary.top:
-            center.y = self.boundary.top
-        if center.y > self.boundary.bottom:
-            center.y = self.boundary.bottom
-        self.rect.center = center
         print(self.rect.center)
+        current_direction = directions[self.direction]
+        new_rect = self.rect.move(dt * self.speed * current_direction)
+        # Keep player inside screen
+        center_x, center_y = new_rect.center
+        center_x = int(center_x)
+        center_y = int(center_y)
+        if center_x < self.boundary.left:
+            center_x = self.boundary.left
+        if center_x > self.boundary.right-1:
+            center_x = self.boundary.right-1
+        if center_y < self.boundary.top:
+            center_y = self.boundary.top
+        if center_y > self.boundary.bottom-1:
+            center_y = self.boundary.bottom-1
         # TODO: prevent illegal moves (backing up, returning on unfinished 'stix')
+        movement = (self.rect.center, (center_x, center_y))
+        print(f"Intended movement: {self.direction}: {movement}")
+        # Check if movement intersects with any other path
+        # check against stix
+        if len(self.stix) > 1:
+            stix_h, stix_v = decompose_polyline(self.stix)
+            intersection = line_intersect(movement, stix_v, ignore=self.rect.center)
+            if intersection:
+                print(f"Intersection (v) at {intersection}")
+                # don't move!
+                return False
+            intersection = line_intersect(movement, stix_h, ignore=self.rect.center)
+            if intersection:
+                print(f"Intersection (h) at {intersection}")
+                # don't move!
+                return False
+
+        self.rect.center = (center_x, center_y)
+        return True
 
     def update(self, dt, direction) -> None:
         # if direction changes:
@@ -130,10 +149,22 @@ class Player(pygame.sprite.Sprite):
         #     check horizontal safe lines near current position
         # if old direction is 'left' or 'right':
         #     check vertical safe lines near current position
-        self.move(dt)
-        self.direction = direction
-        # TODO: draw 'stix'
-        # TODO: close box when a 'stix' meets a safe line
+        self.standstill = direction == 'standstill'
+        if not self.standstill:
+            dir_changed = self.direction != direction
+            self.direction = direction
+            if not self.stix:
+                self.stix.append(self.rect.center)
+            if self.move(dt):
+                print("Move executed\n")
+                if dir_changed:
+                    self.stix.append(self.rect.center)
+                else:
+                    self.stix[-1] = self.rect.center
+                print(self.stix)
+            else:
+                print("Move not allowed\n")
+            # TODO: close box when a 'stix' meets a safe line
 
 
 class QixGame:
@@ -149,19 +180,24 @@ class QixGame:
         self.border = self.screen.get_rect()
         self.border.x += LEFTMARGIN
         self.border.y += TOPMARGIN
-        self.border.width -= LEFTMARGIN + RIGHTMARGIN
-        self.border.height -= TOPMARGIN + BOTTOMMARGIN
-        self.safe_verticals = LineStore('vertical')
+        self.border.width -= LEFTMARGIN + RIGHTMARGIN + 1
+        self.border.height -= TOPMARGIN + BOTTOMMARGIN + 1
         self.safe_horizontals = LineStore('horizontal')
-        self.unsafe_verticals = LineStore('vertical')
+        self.safe_verticals = LineStore('vertical')
         self.unsafe_horizontals = LineStore('horizontal')
-        self.boxes = []  # keep track of surrounded areas
+        self.unsafe_verticals = LineStore('vertical')
+        self.paths = {
+            'safe_horizontals': self.safe_horizontals,
+            'safe_verticals': self.safe_verticals,
+            'unsafe_horizontals': self.unsafe_horizontals,
+            'unsafe_verticals': self.unsafe_verticals,
+        }
         # stix is a polyline (pygame.draw.lines()) where all segments are
         # either horizontal or vertical.
         # Only one Stix polyline can exist at any one time
         self.stix = []  # keep track of unfinished player track
         self.qix = Qix(self.screen)
-        self.player = pygame.sprite.Group(Player(self.border, self.boxes, self.stix))
+        self.player = pygame.sprite.Group(Player(self.border, self.paths, self.stix))
 
     def run(self):
         self.start()
@@ -190,14 +226,20 @@ class QixGame:
                     # TODO: Start timer for fuse
                 if event.type == pygame.KEYDOWN:
                     player_dir = key_map.get(event.key, 'standstill')
-            print(player_dir)
+            # print(player_dir)
             dt = clock.tick(20)
             self.qix.move(dt)
-            self.player.update(dt, directions[player_dir])
+            self.player.update(dt, player_dir)
+
+    def draw_stix(self):
+        if len(self.stix) < 2:
+            return
+        pygame.draw.lines(self.screen, (250, 200, 20), False, self.stix)
 
     def draw_screen(self):
         self.screen.fill((0, 0, 0))
         pygame.draw.rect(self.screen, (150, 100, 10), self.border, width=1)
+        self.draw_stix()
         self.player.draw(self.screen)
 
 
