@@ -67,6 +67,17 @@ def test_polygon_insert_point_error():
     assert "not on path" in str(exc)
 
 
+def test_polygon_can_insert_point_at_specific_linesegment():
+    """You can tell a polygon to split a specified line segment by a point,
+    even if the new point is not 'on' an existing line segment
+    """
+    points = [(0, 0), (0, 10), (10, 10), (10, 0)]
+    path = Polygon(*points)
+    the_point = (5, 5)
+    path.insert(the_point, after=(0, 0))
+    assert path.points[1] == the_point
+
+
 def test_polygon_replace_makes_new_path():
     points = [(0, 0), (0, 5), (0, 10), (10, 10), (10, 0), (10, 5)]
     path = Polygon(*points)

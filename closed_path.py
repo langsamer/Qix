@@ -19,13 +19,16 @@ class Polygon:
     def line_segments(self):
         return list(zip(self.points, self.points[1:] + [self.points[0]]))
 
-    def insert(self, point):
+    def insert(self, point, after=None):
         insert_at = 0
-        for insert_at, ls in enumerate(self.line_segments(), 1):
-            if point_is_on_line(point, ls):
-                break
-        else:  # no suitable line segment found
-            raise ValueError(f"Point {point} is not on path")
+        if after:
+            insert_at = self.points.index(after) + 1
+        else:
+            for insert_at, ls in enumerate(self.line_segments(), 1):
+                if point_is_on_line(point, ls):
+                    break
+            else:  # no suitable line segment found
+                raise ValueError(f"Point {point} is not on path")
         self.points[insert_at:insert_at] = [point]
 
     def replace(self, sub_path):
