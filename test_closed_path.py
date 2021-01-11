@@ -130,3 +130,37 @@ def test_polygon_replace_requires_points_on_the_polygon():
     with pytest.raises(ValueError) as exc:
         path.replace(new_points)
     assert "must be on polygon" in str(exc)
+
+
+def test_polygon_split1():
+    """Like .replace(), .split() returns a new polygon with the relevant part replaced
+    by the polyline given, but it returns a pair of polygons"""
+    points = [(0, 0), (0, 5), (0, 10), (10, 10), (10, 5), (10, 0)]
+    path = Polygon(*points)
+    new_points = [(0, 5), (10, 5)]
+    # replace the "bottom" part of the path with the line across the middle ((0,5), (10,5))
+    new_path, _ = path.split(new_points)
+    assert tuple(new_points) in new_path.line_segments()
+
+
+def test_polygon_split2():
+    """The second polygon returned by .split() is the 'other half' that is defined by the
+    splitting path.  There the splitting path is reversed in order to keep the overall
+    orientation of each polygon consistent"""
+    points = [(0, 0), (0, 5), (0, 10), (10, 10), (10, 5), (10, 0)]
+    path = Polygon(*points)
+    new_points = [(0, 5), (10, 5)]
+    # replace the "bottom" part of the path with the line across the middle ((0,5), (10,5))
+    _, new_path = path.split(new_points)
+    assert type(new_path) == Polygon
+    assert tuple(reversed(new_points)) in new_path.line_segments()
+
+
+def test_polygon_split3():
+    """The first and second polygons returned by .split() are indeed complements"""
+    points = [(0, 0), (0, 5), (0, 10), (10, 10), (10, 5), (10, 0)]
+    path = Polygon(*points)
+    new_points = [(0, 5), (10, 5)]
+    # replace the "bottom" part of the path with the line across the middle ((0,5), (10,5))
+    path1, path2 = path.split(new_points)
+    assert set(path1).intersection(set(path2)) == set(new_points)

@@ -16,6 +16,9 @@ class Polygon:
     def __contains__(self, item):
         return item in self.points
 
+    def __iter__(self):
+        return iter(self.points)
+
     def line_segments(self):
         return list(zip(self.points, self.points[1:] + [self.points[0]]))
 
@@ -32,6 +35,7 @@ class Polygon:
         self.points[insert_at:insert_at] = [point]
 
     def replace(self, sub_path):
+        sub_path = list(sub_path)
         start, end = 0, 0
         for start, point in enumerate(self.points):
             if sub_path[0] == point:
@@ -48,3 +52,8 @@ class Polygon:
         else:
             points = sub_path + self.points[end+1:start]
         return self.__class__(*points)
+
+    def split(self, sub_path):
+        forward = self.replace(sub_path)
+        backward = self.replace(reversed(sub_path))
+        return forward, backward
