@@ -7,6 +7,7 @@ class Polygon:
     """
     A Polygon stores a sequence of points in order.
     """
+
     def __init__(self, *args):
         self.points: List = list(args)
 
@@ -48,12 +49,25 @@ class Polygon:
         else:
             raise ValueError("End point of replacement path must be on polygon")
         if start < end:
-            points = self.points[:start] + sub_path + self.points[end+1:]
+            points = self.points[:start] + sub_path + self.points[end + 1:]
         else:
-            points = sub_path + self.points[end+1:start]
+            points = sub_path + self.points[end + 1:start]
         return self.__class__(*points)
 
     def split(self, sub_path):
         forward = self.replace(sub_path)
         backward = self.replace(reversed(sub_path))
         return forward, backward
+
+    def surrounds(self, point):
+        """Check if point is inside the polygon
+
+        The right and bottom edges are not considered part of the area"""
+        x, y = point
+        crossing = 0
+        for line in self.line_segments():
+            if line[0][0] == line[1][0] > x:  # vertical
+                ys = sorted((line[0][1], line[1][1], y))
+                if y == ys[1] and y != ys[2]:
+                    crossing += 1
+        return crossing % 2 == 1

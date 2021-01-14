@@ -164,3 +164,59 @@ def test_polygon_split3():
     # replace the "bottom" part of the path with the line across the middle ((0,5), (10,5))
     path1, path2 = path.split(new_points)
     assert set(path1).intersection(set(path2)) == set(new_points)
+
+
+def test_polygon_surrounds1():
+    points = [(0, 0), (0, 10), (10, 10), (10, 0)]
+    path = Polygon(*points)
+    the_point = (5, 5)
+    assert path.surrounds(the_point)
+
+
+def test_polygon_surrounds2():
+    points = [(0, 0), (0, 10), (5, 10), (5, 1), (7, 1), (7, 10), (10, 10), (10, 0)]
+    path = Polygon(*points)
+    the_point = (2, 2)
+    assert path.surrounds(the_point)
+
+
+def test_polygon_surrounds_not1():
+    points = [(0, 0), (0, 10), (10, 10), (10, 0)]
+    path = Polygon(*points)
+    the_point = (5, 15)
+    assert not path.surrounds(the_point)
+
+
+def test_polygon_surrounds_not2():
+    points = [(0, 0), (0, 10), (5, 10), (5, 1), (7, 1), (7, 10), (10, 10), (10, 0)]
+    path = Polygon(*points)
+    the_point = (6, 2)
+    assert not path.surrounds(the_point)
+
+
+def test_polygon_surrounds_edge1():
+    points = [(0, 0), (0, 10), (10, 10), (10, 0)]
+    path = Polygon(*points)
+    the_point = (5, 0)
+    assert path.surrounds(the_point)
+
+
+def test_polygon_surrounds_edge2():
+    points = [(0, 0), (0, 10), (10, 10), (10, 0)]
+    path = Polygon(*points)
+    the_point = (0, 5)
+    assert path.surrounds(the_point)
+
+
+def test_polygon_surrounds_not_edge_right():
+    points = [(0, 0), (0, 10), (10, 10), (10, 0)]
+    path = Polygon(*points)
+    the_point = (10, 0)
+    assert not path.surrounds(the_point)
+
+
+def test_polygon_surrounds_not_edge_bottom():
+    points = [(0, 0), (0, 10), (10, 10), (10, 0)]
+    path = Polygon(*points)
+    the_point = (0, 10)
+    assert not path.surrounds(the_point)
