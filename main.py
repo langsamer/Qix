@@ -5,8 +5,8 @@ import pygame
 from acrylic import Color
 
 from common import WIDTH, HEIGHT, LEFTMARGIN, RIGHTMARGIN, TOPMARGIN, BOTTOMMARGIN, TRAIL_LENGTH, \
-    PLAYER_SPEED, key_map, directions
-from linestore import LineStore, decompose_rects, line_intersect, decompose_polyline
+    PLAYER_SPEED, key_map, directions, rect2poly, QIX_SPEED, CLOSE_AREA
+from linestore import LineStore, line_intersect, decompose_polyline
 
 clock = pygame.time.Clock()
 
@@ -26,8 +26,9 @@ def randvec2(max_x, max_y=None, min_x=None, min_y=None):
 
 
 class Qix:
-    def __init__(self, screen):
+    def __init__(self, screen, boundary=None):
         self.screen = screen
+        self.boundary = boundary or rect2poly(screen.get_rect())
         self.a_s = deque([randvec2(min_x=0, max_x=WIDTH, min_y=0, max_y=HEIGHT)],
                          maxlen=TRAIL_LENGTH)
         self.b_s = deque([randvec2(min_x=0, max_x=WIDTH, min_y=0, max_y=HEIGHT)],
@@ -39,7 +40,8 @@ class Qix:
         self.omega = randint(5, 20)  # angular velocity on the colour wheel
 
     def move(self, dt):
-        abs_dt = dt / 30
+        # TODO: bounce of `self.boundary` not of the screen rect
+        abs_dt = dt * QIX_SPEED
         c = self.color_s[-1].hsv
         new_hue = (c.h + abs_dt * self.omega) % 360.0
         new_color = Color(hsv=[new_hue, c.s, c.v])
@@ -109,12 +111,12 @@ class Player(pygame.sprite.Sprite):
         center_y = int(center_y)
         if center_x < self.boundary.left:
             center_x = self.boundary.left
-        if center_x > self.boundary.right-1:
-            center_x = self.boundary.right-1
+        if center_x > self.boundary.right - 1:
+            center_x = self.boundary.right - 1
         if center_y < self.boundary.top:
             center_y = self.boundary.top
-        if center_y > self.boundary.bottom-1:
-            center_y = self.boundary.bottom-1
+        if center_y > self.boundary.bottom - 1:
+            center_y = self.boundary.bottom - 1
         # TODO: prevent illegal moves (backing up, returning on unfinished 'stix')
         movement = (self.rect.center, (center_x, center_y))
         print(f"Intended movement: {self.direction}: {movement}")
@@ -172,9 +174,21 @@ class QixGame:
         """
         All lines (paths) drawn by the player are stored
         in dictionaries separated into verticals and horizontals:
+
         + safe: lines around closed areas
         + unsafe: line segments of the shape the player is currently drawing
 
+        The game keeps a record of the current boundaries of the open area
+        and the enclosed area.
+
+        Outline of the game cycle:
+
+        + update positions
+        + check for collisions
+
+          + Player (Stix) vs. boundary ==> close area and score
+          + Player (Stix) vs. Qix ==> lose a life
+          + Sparx or Fuse vs. Player (position) ==> lose a life
         """
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         self.border = self.screen.get_rect()
@@ -192,11 +206,18 @@ class QixGame:
             'unsafe_horizontals': self.unsafe_horizontals,
             'unsafe_verticals': self.unsafe_verticals,
         }
+        bounds = self.border.copy()
+        bounds.width -= 1
+        bounds.height -= 1
+        # Open area: where the Qix roams
+        self.boundary_open = rect2poly(bounds)
+        # Closed areas: Areas the player has already surrounded
+        self.boundary_closed = []
         # stix is a polyline (pygame.draw.lines()) where all segments are
         # either horizontal or vertical.
         # Only one Stix polyline can exist at any one time
         self.stix = []  # keep track of unfinished player track
-        self.qix = Qix(self.screen)
+        self.qix = Qix(self.screen, self.boundary_open)
         self.player = pygame.sprite.Group(Player(self.border, self.paths, self.stix))
 
     def run(self):
@@ -220,11 +241,13 @@ class QixGame:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     done = True
-                if event.type == pygame.KEYUP and player_dir == key_map.get(event.key, 'standstill'):
+                elif event.type == CLOSE_AREA:
+                    print("Closed an area", event)
+                elif event.type == pygame.KEYUP and player_dir == key_map.get(event.key, 'standstill'):
                     # If the player is not pressing the key for the current direction, we have to stop
                     player_dir = 'standstill'
                     # TODO: Start timer for fuse
-                if event.type == pygame.KEYDOWN:
+                elif event.type == pygame.KEYDOWN:
                     player_dir = key_map.get(event.key, 'standstill')
             # print(player_dir)
             dt = clock.tick(20)
