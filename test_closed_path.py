@@ -15,11 +15,28 @@ def test_polygon_init_nonempty():
     assert len(path) == len(points)
 
 
+def test_polygon_init_with_list():
+    """You can instantiate a Polygon with a list of points (one argument)"""
+    points = [(0, 0), (5, 0), (5, 5), (5, 10), (10, 10)]
+    path1 = Polygon(points)
+    path2 = Polygon(*points)
+    assert path1 == path2
+
+
+def test_polygon_init_with_polygon():
+    """You can instantiate a Polygon with another Polygon instance"""
+    points = [(0, 0), (5, 0), (5, 5), (5, 10), (10, 10)]
+    path1 = Polygon(points)
+    path2 = Polygon(path1)
+    assert path1 == path2
+    assert path1 is not path2
+
+
 def test_polygon_line_segments():
     """You can give any number of points to a path at instantiation"""
     points = [(0, 0), (5, 0), (5, 5), (5, 10), (10, 10)]
     path = Polygon(*points)
-    assert len(path.line_segments()) == len(points)
+    assert len(list(path.line_segments())) == len(points)
 
 
 def test_polygon_insert_point():
@@ -220,3 +237,18 @@ def test_polygon_surrounds_not_edge_bottom():
     path = Polygon(*points)
     the_point = (0, 10)
     assert not path.surrounds(the_point)
+
+
+def test_polygon_reversed():
+    """reversed() can be used on Polygons and behaves as expected."""
+    points = [(0, 0), (0, 10), (10, 10), (10, 0)]
+    path = Polygon(*points)
+    assert [p for p in reversed(path)] == list(reversed(points))
+
+
+def test_instantiate_reversed_polygon():
+    """reversed() can be used on Polygons and behaves as expected."""
+    points = [(0, 0), (0, 10), (10, 10), (10, 0)]
+    path = Polygon(*points)
+    htap = Polygon(*reversed(path))
+    assert [p for p in htap] == list(reversed(points))

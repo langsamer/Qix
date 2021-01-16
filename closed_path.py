@@ -6,13 +6,23 @@ from paths import point_is_on_line
 class Polygon:
     """
     A Polygon stores a sequence of points in order.
+    The polygon is assumed to be closed, the last point is implicitly
+    connected to the first point.
     """
 
+    points: List
+
     def __init__(self, *args):
-        self.points: List = list(args)
+        if len(args) == 1:
+            self.points = list(*args)
+        else:
+            self.points = list(args)
 
     def __len__(self):
         return len(self.points)
+
+    def __getitem__(self, item):
+        return self.points[item]
 
     def __contains__(self, item):
         return item in self.points
@@ -20,8 +30,14 @@ class Polygon:
     def __iter__(self):
         return iter(self.points)
 
+    def __eq__(self, other):
+        return self.points == other.points
+
+    def __repr__(self):
+        return f"Polygon({self.points!r})"
+
     def line_segments(self):
-        return list(zip(self.points, self.points[1:] + [self.points[0]]))
+        return zip(self.points, self.points[1:] + [self.points[0]])
 
     def insert(self, point, after=None):
         insert_at = 0
