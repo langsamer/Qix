@@ -5,9 +5,9 @@ import pygame
 from paths import point_is_on_line
 
 
-class Polygon:
+class Polyline:
     """
-    A Polygon stores a sequence of points in order.
+    A Polyline stores a sequence of points in order.
     The polygon is assumed to be closed, the last point is implicitly
     connected to the first point.
     """
@@ -36,7 +36,7 @@ class Polygon:
         return self.points == other.points
 
     def __repr__(self):
-        return f"Polygon({self.points!r})"
+        return f"Polyline({self.points!r})"
 
     def line_segments(self):
         return zip(self.points, self.points[1:] + [self.points[0]])
@@ -104,4 +104,4 @@ class Polygon:
 
 
 def rect2poly(rect: pygame.Rect):
-    return Polygon(rect.topleft, rect.topright, rect.bottomright, rect.bottomleft)
+    return Polyline(rect.topleft, rect.topright, rect.bottomright, rect.bottomleft)

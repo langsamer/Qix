@@ -49,11 +49,11 @@ Indicated by event `CLOSE_AREA`
    
 2. Determine the appropriate orientation of the current Stix for splitting the 
    current boundary.
-   This decides which of the first and second return value of Polygon.split() is the 
+   This decides which of the first and second return value of Polyline.split() is the 
    closed area and which is the open area. The open area will be the new boundary.
 
 3. Closing the polygon requires tracing along the boundary to the starting point.
-   Luckily, we have Polygon.split(): When we insert the start and end point of the 
+   Luckily, we have Polyline.split(): When we insert the start and end point of the 
    Stix in the boundary polygon, we only need to split() the boundary by the Stix.
 
 ### Where is Qix?

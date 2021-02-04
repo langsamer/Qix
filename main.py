@@ -5,7 +5,7 @@ from typing import List
 import pygame
 from acrylic import Color
 
-from closed_path import Polygon, rect2poly
+from polyline import Polyline, rect2poly
 from common import WIDTH, HEIGHT, LEFTMARGIN, RIGHTMARGIN, TOPMARGIN, BOTTOMMARGIN, TRAIL_LENGTH, \
     PLAYER_SPEED, key_map, directions, QIX_SPEED, CLOSE_AREA
 from linestore import LineStore, line_intersect, decompose_polyline
@@ -218,9 +218,9 @@ class QixGame:
         bounds.width -= 1
         bounds.height -= 1
         # Open area: where the Qix roams
-        self.boundary_open: Polygon = rect2poly(bounds)
+        self.boundary_open: Polyline = rect2poly(bounds)
         # Closed areas: Areas the player has already surrounded
-        self.boundary_closed: List[Polygon] = []
+        self.boundary_closed: List[Polyline] = []
         # stix is a polyline (pygame.draw.lines()) where all segments are
         # either horizontal or vertical.
         # Only one Stix polyline can exist at any one time
