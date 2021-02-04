@@ -24,7 +24,3 @@ directions = {
 }
 
 CLOSE_AREA = pygame.event.custom_type()
-
-
-def rect2poly(rect: pygame.Rect):
-    return [rect.topleft, rect.topright, rect.bottomright, rect.bottomleft]

@@ -1,5 +1,7 @@
 from typing import List
 
+import pygame
+
 from paths import point_is_on_line
 
 
@@ -79,6 +81,7 @@ class Polygon:
         """Check if point is inside the polygon
 
         The right and bottom edges are not considered part of the area"""
+        print(point)
         x, y = point
         crossing = 0
         for line in self.line_segments():

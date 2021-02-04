@@ -1,12 +1,15 @@
 from collections import deque
 from random import randint, random
+from typing import List
 
 import pygame
 from acrylic import Color
 
+from closed_path import Polygon, rect2poly
 from common import WIDTH, HEIGHT, LEFTMARGIN, RIGHTMARGIN, TOPMARGIN, BOTTOMMARGIN, TRAIL_LENGTH, \
-    PLAYER_SPEED, key_map, directions, rect2poly, QIX_SPEED, CLOSE_AREA
+    PLAYER_SPEED, key_map, directions, QIX_SPEED, CLOSE_AREA
 from linestore import LineStore, line_intersect, decompose_polyline
+from paths import point_is_on_line
 
 clock = pygame.time.Clock()
 
@@ -96,7 +99,8 @@ class Player(pygame.sprite.Sprite):
         self.speed = PLAYER_SPEED
         self.direction = 'standstill'
         self.standstill = True
-        self.boundary = border
+        self.border = border
+        self.boundary = rect2poly(border)
         self.paths = safe_paths
         self.stix = stix
         self.safe = True
@@ -109,15 +113,14 @@ class Player(pygame.sprite.Sprite):
         center_x, center_y = new_rect.center
         center_x = int(center_x)
         center_y = int(center_y)
-        if center_x < self.boundary.left:
-            center_x = self.boundary.left
-        if center_x > self.boundary.right - 1:
-            center_x = self.boundary.right - 1
-        if center_y < self.boundary.top:
-            center_y = self.boundary.top
-        if center_y > self.boundary.bottom - 1:
-            center_y = self.boundary.bottom - 1
-        # TODO: prevent illegal moves (backing up, returning on unfinished 'stix')
+        if center_x < self.border.left:
+            center_x = self.border.left
+        elif center_x > self.border.right:
+            center_x = self.border.right
+        elif center_y < self.border.top:
+            center_y = self.border.top
+        elif center_y > self.border.bottom:
+            center_y = self.border.bottom
         movement = (self.rect.center, (center_x, center_y))
         print(f"Intended movement: {self.direction}: {movement}")
         # Check if movement intersects with any other path
@@ -161,6 +164,11 @@ class Player(pygame.sprite.Sprite):
                 print("Move executed\n")
                 if dir_changed:
                     self.stix.append(self.rect.center)
+                    if any(point_is_on_line(self.rect.center, line_segment)
+                           for line_segment in self.boundary.line_segments()):
+                        pygame.event.post(
+                            pygame.event.Event(CLOSE_AREA, {'polyline': self.stix})
+                        )
                 else:
                     self.stix[-1] = self.rect.center
                 print(self.stix)
@@ -210,15 +218,19 @@ class QixGame:
         bounds.width -= 1
         bounds.height -= 1
         # Open area: where the Qix roams
-        self.boundary_open = rect2poly(bounds)
+        self.boundary_open: Polygon = rect2poly(bounds)
         # Closed areas: Areas the player has already surrounded
-        self.boundary_closed = []
+        self.boundary_closed: List[Polygon] = []
         # stix is a polyline (pygame.draw.lines()) where all segments are
         # either horizontal or vertical.
         # Only one Stix polyline can exist at any one time
         self.stix = []  # keep track of unfinished player track
         self.qix = Qix(self.screen, self.boundary_open)
-        self.player = pygame.sprite.Group(Player(self.border, self.paths, self.stix))
+        self.player = pygame.sprite.Group(Player(bounds,
+                                                 self.boundary_open,
+                                                 self.stix))
+        self.score = 0
+        self.percentage = 0
 
     def run(self):
         self.start()
@@ -231,6 +243,40 @@ class QixGame:
     def stop(self):
         pass
 
+    def close_area(self, event):
+        print("Closed an area", event)
+        self.boundary_open.insert(self.stix[0])
+        self.boundary_open.insert(self.stix[-1])
+        boundary1, boundary2 = self.boundary_open.split(self.stix)
+
+        # Determine which part of the split area to close
+        # Note: with only one Qix, the logic is very simple
+        if boundary1.surrounds(self.qix.a_s[0]):
+            to_close = boundary2
+            self.boundary_open = boundary1
+        else:
+            to_close = boundary1
+            self.boundary_open = boundary2
+        self.boundary_closed.append(to_close)
+
+        # Calculate score
+        area = to_close.area()
+        percentage = area / (self.border.width - 1)
+        self.percentage += percentage
+        # TODO: multiplier for "slow" mode
+        score = int(percentage * 1000)
+        print(f"Gained {area} pixels")
+        print(f"Score: {score}")
+        self.score += score
+
+        # Check if level goal is reached
+        # TODO: replace 0.7 with variable
+        if self.percentage > 0.7:
+            print(f"Level finished with {int(self.percentage * 100)}% area enclosed!")
+            print("Well done!")
+
+        self.stix = []
+
     def mainloop(self):
         done = False
         player_dir = 'standstill'
@@ -242,7 +288,7 @@ class QixGame:
                 if event.type == pygame.QUIT:
                     done = True
                 elif event.type == CLOSE_AREA:
-                    print("Closed an area", event)
+                    self.close_area(event)
                 elif event.type == pygame.KEYUP and player_dir == key_map.get(event.key, 'standstill'):
                     # If the player is not pressing the key for the current direction, we have to stop
                     player_dir = 'standstill'
@@ -262,6 +308,9 @@ class QixGame:
     def draw_screen(self):
         self.screen.fill((0, 0, 0))
         pygame.draw.rect(self.screen, (150, 100, 10), self.border, width=1)
+        for poly in self.boundary_closed:
+            pygame.draw.polygon(self.screen, (0x40, 0x40, 0x80), points=poly.points)
+            pygame.draw.polygon(self.screen, (0xc0, 0xc0, 0xc0), points=poly.points)
         self.draw_stix()
         self.player.draw(self.screen)
 
