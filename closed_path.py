@@ -87,3 +87,18 @@ class Polygon:
                 if y == ys[1] and y != ys[2]:
                     crossing += 1
         return crossing % 2 == 1
+
+    def area(self):
+        """Calculate the area surrounded by the polygon.
+
+        There is an assumption that the x coordinates will always be non-negative,
+        but the calculation may work für negative x's, too. I just have not checked.
+        """
+        # add up rectangles left and right of vertical edges:
+        area = sum(p[0] * (q[1] - p[1])
+                   for p, q in self.line_segments())
+        return area
+
+
+def rect2poly(rect: pygame.Rect):
+    return Polygon(rect.topleft, rect.topright, rect.bottomright, rect.bottomleft)

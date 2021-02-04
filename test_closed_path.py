@@ -252,3 +252,39 @@ def test_instantiate_reversed_polygon():
     path = Polygon(*points)
     htap = Polygon(*reversed(path))
     assert [p for p in htap] == list(reversed(points))
+
+
+def test_polygon_area1():
+    points = [(0, 0), (10, 0), (10, 10), (0, 10)]
+    path = Polygon(*points)
+    assert path.area() == 100
+
+
+def test_polygon_area2():
+    points = [(0,0), (10, 0), (10, 10),
+              (8, 10), (8, 5), (3, 5), (3, 10),  # cut out 5x5
+              (0, 10)]
+    path = Polygon(*points)
+    assert path.area() == 100 - 25
+
+
+def test_polygon_area3():
+    points = [(0, 0), (10, 0),
+              (10, 3), (5, 3), (5, 8), (10, 8),  # cut out 5x5
+              (10, 10), (0, 10)]
+    path = Polygon(*points)
+    assert path.area() == 100 - 25
+
+
+def test_polygon_area4():
+    points = [(10, 8), (5, 8), (5, 3), (10, 3)]  # just a 5x5
+    path = Polygon(*points)
+    assert path.area() == 25
+
+
+def test_polygon_area_reversed_is_negative():
+    points = reversed([(0, 0), (10, 0), (10, 10), (0, 10)])
+    path = Polygon(*points)
+    assert path.area() == -100
+
+
