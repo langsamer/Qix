@@ -126,7 +126,7 @@ def decompose_polyline(polyline,
         elif p0[1] == p1[1]:  # same y coordinate: horizontal line
             horizontals.add((p0, p1))
         else:
-            raise ValueError("Polyline contains a diagonal line")
+            raise ValueError("ClosedPolyline contains a diagonal line")
     return horizontals, verticals
 
 

@@ -8,8 +8,9 @@ from paths import point_is_on_line
 class Polyline:
     """
     A Polyline stores a sequence of points in order.
-    The polygon is assumed to be closed, the last point is implicitly
-    connected to the first point.
+
+    The implementation does not prevent the line from crossing itself,
+    but things may go wrong if that happens. (not tested!)
     """
 
     points: List
@@ -36,10 +37,10 @@ class Polyline:
         return self.points == other.points
 
     def __repr__(self):
-        return f"Polyline({self.points!r})"
+        return f"ClosedPolyline({self.points!r})"
 
     def line_segments(self):
-        return zip(self.points, self.points[1:] + [self.points[0]])
+        return zip(self.points, self.points[1:])
 
     def insert(self, point, after=None):
         insert_at = 0
@@ -54,6 +55,7 @@ class Polyline:
         self.points[insert_at:insert_at] = [point]
 
     def replace(self, sub_path):
+        # TODO: Check if this is working correctly for open polylines
         sub_path = list(sub_path)
         start, end = 0, 0
         for start, point in enumerate(self.points):
@@ -77,6 +79,32 @@ class Polyline:
         backward = self.replace(reversed(sub_path))
         return forward, backward
 
+
+class ClosedPolyline(Polyline):
+    """
+    A ClosedPolyline stores a sequence of points in order.
+    The polygon is assumed to be closed, the last point is implicitly
+    connected to the first point.
+
+    In addition to the methods of `Polyline`, objects of this class
+    can calculate their own area and test if a given point lies inside
+    the polygon.
+    """
+
+    def line_segments(self):
+        return zip(self.points, self.points[1:] + [self.points[0]])
+
+    def area(self):
+        """Calculate the area surrounded by the polygon.
+
+        There is an assumption that the x coordinates will always be non-negative,
+        but the calculation may work für negative x's, too. I just have not checked.
+        """
+        # add up rectangles left and right of vertical edges:
+        area = sum(p[0] * (q[1] - p[1])
+                   for p, q in self.line_segments())
+        return area
+
     def surrounds(self, point):
         """Check if point is inside the polygon
 
@@ -91,17 +119,6 @@ class Polyline:
                     crossing += 1
         return crossing % 2 == 1
 
-    def area(self):
-        """Calculate the area surrounded by the polygon.
-
-        There is an assumption that the x coordinates will always be non-negative,
-        but the calculation may work für negative x's, too. I just have not checked.
-        """
-        # add up rectangles left and right of vertical edges:
-        area = sum(p[0] * (q[1] - p[1])
-                   for p, q in self.line_segments())
-        return area
-
 
 def rect2poly(rect: pygame.Rect):
-    return Polyline(rect.topleft, rect.topright, rect.bottomright, rect.bottomleft)
+    return ClosedPolyline(rect.topleft, rect.topright, rect.bottomright, rect.bottomleft)
