@@ -120,6 +120,15 @@ negative or zero.
 _TODO:_ Check which is faster: filtering out horizontal edges before calculation or 
 simply relying on `y1-y0 == 0`
 
+### Scoring
+
+To encourage the player to attempt to close larger area, the score for areas should be 
+more than proportional to the area.
+
+    (area * constant) / (total_area - newly_closed_area)
+
+
+
 ## General
 
 Polygons always define areas in clockwise direction. (Because of the inverted y coordinate,
