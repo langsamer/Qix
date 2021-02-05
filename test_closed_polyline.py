@@ -15,6 +15,13 @@ def test_polygon_init_nonempty():
     assert len(path) == len(points)
 
 
+def test_polyline_number_of_line_segments():
+    """an open polyline has as many line segments as it has points"""
+    points = [(0, 0), (10, 0), (10, 10)]
+    path = ClosedPolyline(*points)
+    assert len(path) == len(list(path.line_segments()))
+
+
 def test_polygon_init_with_list():
     """You can instantiate a ClosedPolyline with a list of points (one argument)"""
     points = [(0, 0), (5, 0), (5, 5), (5, 10), (10, 10)]
@@ -43,6 +50,16 @@ def test_polygon_insert_point():
     points = [(0, 0), (10, 0), (10, 10)]
     path = ClosedPolyline(*points)
     the_point = (5, 0)
+    path.insert(the_point)
+    assert len(path) == len(points) + 1
+    assert the_point in path
+
+
+def test_polygon_insert_point_between_last_and_first():
+    """the point to be inserted may lie on the line from the last to the first point."""
+    points = [(0, 0), (10, 0), (10, 10), (0, 10)]
+    path = ClosedPolyline(*points)
+    the_point = (0, 5)
     path.insert(the_point)
     assert len(path) == len(points) + 1
     assert the_point in path

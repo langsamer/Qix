@@ -2,7 +2,7 @@ from typing import List
 
 import pygame
 
-from paths import point_is_on_line
+from paths import point_is_on_line, intersect_2d_segments
 
 
 class Polyline:
@@ -37,7 +37,13 @@ class Polyline:
         return self.points == other.points
 
     def __repr__(self):
-        return f"ClosedPolyline({self.points!r})"
+        return f"{self.__class__.__name__}({self.points!r})"
+
+    def append(self, point):
+        self.points.append(point)
+
+    def index(self, item):
+        return self.points.index(item)
 
     def line_segments(self):
         return zip(self.points, self.points[1:])
@@ -45,7 +51,7 @@ class Polyline:
     def insert(self, point, after=None):
         insert_at = 0
         if after:
-            insert_at = self.points.index(after) + 1
+            insert_at = self.index(after) + 1
         else:
             for insert_at, ls in enumerate(self.line_segments(), 1):
                 if point_is_on_line(point, ls):
@@ -54,9 +60,7 @@ class Polyline:
                 raise ValueError(f"Point {point} is not on path")
         self.points[insert_at:insert_at] = [point]
 
-    def replace(self, sub_path):
-        # TODO: Check if this is working correctly for open polylines
-        sub_path = list(sub_path)
+    def _splicepoints(self, sub_path):
         start, end = 0, 0
         for start, point in enumerate(self.points):
             if sub_path[0] == point:
@@ -68,16 +72,24 @@ class Polyline:
                 break
         else:
             raise ValueError("End point of replacement path must be on polygon")
+        return start, end
+
+    def replace(self, sub_path):
+        sub_path = list(sub_path)
+        start, end = self._splicepoints(sub_path)
         if start < end:
             points = self.points[:start] + sub_path + self.points[end + 1:]
         else:
-            points = sub_path + self.points[end + 1:start]
+            raise ValueError("Cannot replace a segment of original in reverse direction")
         return self.__class__(*points)
 
-    def split(self, sub_path):
-        forward = self.replace(sub_path)
-        backward = self.replace(reversed(sub_path))
-        return forward, backward
+    def intersect(self, line):
+        """"""
+        point = None
+        for segment in self.line_segments():
+            if point := intersect_2d_segments(line, segment):
+                break
+        return point
 
 
 class ClosedPolyline(Polyline):
@@ -93,6 +105,20 @@ class ClosedPolyline(Polyline):
 
     def line_segments(self):
         return zip(self.points, self.points[1:] + [self.points[0]])
+
+    def replace(self, sub_path):
+        sub_path = list(sub_path)
+        start, end = self._splicepoints(sub_path)
+        if start < end:
+            points = self.points[:start] + sub_path + self.points[end + 1:]
+        else:
+            points = sub_path + self.points[end + 1:start]
+        return self.__class__(*points)
+
+    def split(self, sub_path):
+        forward = self.replace(sub_path)
+        backward = self.replace(reversed(sub_path))
+        return forward, backward
 
     def area(self):
         """Calculate the area surrounded by the polygon.
