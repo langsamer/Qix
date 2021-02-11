@@ -16,14 +16,13 @@ def point_is_on_line(point, line):
     elif x0 == x1:  # vertical
         return point[0] == x0 and min(y0, y1) <= point[1] <= max(y0, y1)
     else:
-        raise ValueError("point_is_on_line can only check horizontal and vertical lines")
+        raise ValueError(
+            "point_is_on_line can only check horizontal and vertical lines"
+        )
 
 
 def lines_with_point(lines, point):
-    result = [
-        line for line in lines
-        if point_is_on_line(point, line)
-    ]
+    result = [line for line in lines if point_is_on_line(point, line)]
     return result
 
 

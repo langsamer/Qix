@@ -91,8 +91,7 @@ def test_polygon_insert_point_in_correct_position2():
 
 
 def test_polygon_insert_point_error():
-    """A new point is refused if it is not on an existing line segment
-    """
+    """A new point is refused if it is not on an existing line segment"""
     points = [(0, 0), (0, 10), (10, 10), (10, 0)]
     path = ClosedPolyline(*points)
     the_point = (5, 5)
@@ -278,17 +277,31 @@ def test_polygon_area1():
 
 
 def test_polygon_area2():
-    points = [(0,0), (10, 0), (10, 10),
-              (8, 10), (8, 5), (3, 5), (3, 10),  # cut out 5x5
-              (0, 10)]
+    points = [
+        (0, 0),
+        (10, 0),
+        (10, 10),
+        (8, 10),
+        (8, 5),
+        (3, 5),
+        (3, 10),  # cut out 5x5
+        (0, 10),
+    ]
     path = ClosedPolyline(*points)
     assert path.area() == 100 - 25
 
 
 def test_polygon_area3():
-    points = [(0, 0), (10, 0),
-              (10, 3), (5, 3), (5, 8), (10, 8),  # cut out 5x5
-              (10, 10), (0, 10)]
+    points = [
+        (0, 0),
+        (10, 0),
+        (10, 3),
+        (5, 3),
+        (5, 8),
+        (10, 8),  # cut out 5x5
+        (10, 10),
+        (0, 10),
+    ]
     path = ClosedPolyline(*points)
     assert path.area() == 100 - 25
 
@@ -303,5 +316,3 @@ def test_polygon_area_reversed_is_negative():
     points = reversed([(0, 0), (10, 0), (10, 10), (0, 10)])
     path = ClosedPolyline(*points)
     assert path.area() == -100
-
-

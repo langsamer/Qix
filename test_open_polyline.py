@@ -7,6 +7,7 @@ from polyline import Polyline
 # Here we test only what differentiates (or should differentiate)
 # open and closed polylines.
 
+
 def test_convert_polyline_to_list():
     """A Polyline object can be cast to a plain list by list()"""
     points = [(0, 0), (10, 0), (10, 10)]

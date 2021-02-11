@@ -5,8 +5,8 @@ from pygame.math import Vector2
 
 
 def test_linestore_init():
-    ls1 = LineStore('horizontal')
-    ls2 = LineStore('vertical')
+    ls1 = LineStore("horizontal")
+    ls2 = LineStore("vertical")
     assert ls1
     assert ls2
 
@@ -14,12 +14,12 @@ def test_linestore_init():
 def test_linestore_init_requires_dim():
     """Not passing 'horizontal' or 'vertical' as dim results in an error"""
     with pytest.raises(ValueError):
-        LineStore('something else')
+        LineStore("something else")
 
 
 def test_linestore_add_horizontal1():
     line = ((1, 2), (3, 4))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line)
     assert (1, 3) in ls.lines[2]
 
@@ -27,7 +27,7 @@ def test_linestore_add_horizontal1():
 def test_linestore_add_horizontal2():
     line1 = ((1, 2), (3, 4))
     line2 = ((5, 6), (10, 6))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line1)
     ls.add(line2)
     assert (1, 3) in ls.lines[2]
@@ -37,7 +37,7 @@ def test_linestore_add_horizontal2():
 def test_linestore_add_horizontal3():
     line1 = ((1, 6), (3, 6))
     line2 = ((5, 6), (10, 6))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line1)
     ls.add(line2)
     assert (1, 3) in ls.lines[6]
@@ -46,7 +46,7 @@ def test_linestore_add_horizontal3():
 
 def test_linestore_add_vertical1():
     line = ((3, 2), (3, 4))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line)
     assert (2, 4) in ls.lines[3]
 
@@ -54,7 +54,7 @@ def test_linestore_add_vertical1():
 def test_linestore_add_vertical2():
     line1 = ((3, 2), (3, 4))
     line2 = ((5, 6), (5, 19))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     assert (2, 4) in ls.lines[3]
@@ -64,7 +64,7 @@ def test_linestore_add_vertical2():
 def test_linestore_add_vertical3():
     line1 = ((5, 1), (5, 3))
     line2 = ((5, 4), (5, 10))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     assert (1, 3) in ls.lines[5]
@@ -75,7 +75,7 @@ def test_linestore_add_simplify1():
     """Where lines overlap, LineStore.simplify merges them, and the original line segments are removed"""
     line1 = ((5, 1), (5, 5))
     line2 = ((5, 4), (5, 10))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     ls.simplify(5)
@@ -88,7 +88,7 @@ def test_linestore_add_simplify2():
     """Where lines do not overlap, LineStore.simplify keeps them separate"""
     line1 = ((5, 1), (5, 3))
     line2 = ((5, 4), (5, 10))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     ls.simplify(5)
@@ -101,7 +101,7 @@ def test_linestore_get_lines_horizontal():
     line2 = ((5, 1), (7, 1))
     line3 = ((6, 2), (7, 2))
     line4 = ((3, 5), (6, 5))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -117,7 +117,7 @@ def test_linestore_get_lines_vertical():
     line2 = ((5, 6), (5, 10))
     line3 = ((6, 2), (6, 10))
     line4 = ((7, 0), (7, 5))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -132,7 +132,7 @@ def test_linestore_get_near_horizontal():
     line2 = ((5, 1), (7, 1))
     line3 = ((6, 2), (7, 2))
     line4 = ((3, 5), (6, 5))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -149,7 +149,7 @@ def test_linestore_get_near_vertical():
     line2 = ((5, 6), (5, 10))
     line3 = ((6, 2), (6, 10))
     line4 = ((7, 0), (7, 5))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -174,7 +174,7 @@ def test_polyline2linesegments_requires_more_than_1_point():
 
 
 def test_line_intersect0():
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     the_line = ((1, 1), (2, 1))
     assert type(line_intersect(the_line, ls)) == tuple
 
@@ -184,7 +184,7 @@ def test_line_intersect_horizontal_overlap1():
     line2 = ((5, 1), (7, 1))
     line3 = ((6, 2), (7, 2))
     line4 = ((3, 5), (6, 5))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -197,7 +197,7 @@ def test_line_intersect_horizontal_overlap2():
     line1 = ((0, 1), (4, 1))
     line3 = ((6, 2), (7, 2))
     line4 = ((3, 5), (6, 5))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line1)
     ls.add(line3)
     ls.add(line4)
@@ -209,7 +209,7 @@ def test_line_intersect_horizontal_overlap_single_point():
     line1 = ((0, 1), (4, 1))
     line3 = ((6, 2), (7, 2))
     line4 = ((3, 5), (6, 5))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line1)
     ls.add(line3)
     ls.add(line4)
@@ -221,7 +221,7 @@ def test_line_intersect_horizontal_overlap_single_point_ignore():
     line1 = ((0, 1), (4, 1))
     line3 = ((6, 2), (7, 2))
     line4 = ((3, 5), (6, 5))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line1)
     ls.add(line3)
     ls.add(line4)
@@ -234,7 +234,7 @@ def test_line_intersect2_horizontal_no_overlap():
     line2 = ((5, 1), (7, 1))
     line3 = ((6, 2), (7, 2))
     line4 = ((3, 5), (6, 5))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -248,7 +248,7 @@ def test_line_intersect_vertical_overlap1():
     line2 = ((5, 2), (5, 10))
     line3 = ((7, 20), (7, 25))
     line4 = ((3, 5), (3, 15))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -262,7 +262,7 @@ def test_line_intersect_vertical_overlap2():
     line2 = ((5, 2), (5, 10))
     line3 = ((7, 20), (7, 25))
     line4 = ((3, 5), (3, 15))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -276,7 +276,7 @@ def test_line_intersect_vertical_overlap_single_point():
     line2 = ((5, 2), (5, 10))
     line3 = ((7, 20), (7, 25))
     line4 = ((3, 5), (3, 15))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -290,7 +290,7 @@ def test_line_intersect_vertical_overlap_single_point_ignore():
     line2 = ((5, 2), (5, 10))
     line3 = ((7, 20), (7, 25))
     line4 = ((3, 5), (3, 15))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -304,7 +304,7 @@ def test_line_intersect2_vertical_no_overlap():
     line2 = ((5, 2), (5, 10))
     line3 = ((7, 20), (7, 25))
     line4 = ((3, 5), (3, 15))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -318,7 +318,7 @@ def test_line_intersect_horizontal_intersection():
     line2 = ((6, 1), (15, 1))
     line3 = ((7, 20), (17, 20))
     line4 = ((3, 5), (13, 5))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -332,7 +332,7 @@ def test_line_intersect_horizontal_intersection_ignore():
     line1 = ((0, 1), (5, 1))
     line2 = ((6, 1), (15, 1))
     line4 = ((3, 5), (13, 5))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line1)
     ls.add(line2)
     ls.add(line4)
@@ -345,7 +345,7 @@ def test_line_intersect_horizontal_intersection_ignore2():
     line1 = ((0, 1), (5, 1))
     line2 = ((6, 1), (15, 1))
     line4 = ((3, 5), (13, 5))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line1)
     ls.add(line2)
     ls.add(line4)
@@ -360,7 +360,7 @@ def test_line_intersect1_horizontal_no_intersection():
     line2 = ((6, 1), (15, 1))
     line3 = ((7, 20), (17, 20))
     line4 = ((3, 5), (13, 5))
-    ls = LineStore('horizontal')
+    ls = LineStore("horizontal")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -374,7 +374,7 @@ def test_line_intersect1_vertical_intersection():
     line2 = ((5, 2), (5, 10))
     line3 = ((7, 20), (7, 25))
     line4 = ((3, 5), (3, 15))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -389,7 +389,7 @@ def test_line_intersect_vertical_intersection_ignore():
     line2 = ((5, 2), (5, 10))
     line3 = ((7, 20), (7, 25))
     line4 = ((3, 5), (3, 15))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -403,7 +403,7 @@ def test_line_intersect_vertical_intersection_ignore2():
     line2 = ((5, 2), (5, 10))
     line3 = ((7, 20), (7, 25))
     line4 = ((3, 5), (3, 15))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)
@@ -419,7 +419,7 @@ def test_line_intersect1_vertical_no_intersection():
     line2 = ((5, 2), (5, 10))
     line3 = ((7, 20), (7, 25))
     line4 = ((3, 5), (3, 15))
-    ls = LineStore('vertical')
+    ls = LineStore("vertical")
     ls.add(line1)
     ls.add(line2)
     ls.add(line3)

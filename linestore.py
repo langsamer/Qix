@@ -6,7 +6,7 @@ import pygame
 
 class LineStore:
     def __init__(self, dim: str):
-        if dim not in ['horizontal', 'vertical']:
+        if dim not in ["horizontal", "vertical"]:
             raise ValueError("Dimension dim must be either 'horizontal' or 'vertical'")
         self.dim = dim
         self.lines = defaultdict(list)
@@ -15,14 +15,10 @@ class LineStore:
         """Turn the internal representation by only one coordinate of the endpoints
         and an index for the other dimension into the standard representation of
         a tuple of startpoint and endpoint: ((x0,y0), (x1,y1))"""
-        if self.dim == 'horizontal':
-            return [
-                ((x0, other_coord), (x1, other_coord)) for x0, x1 in line_endpoints
-            ]
+        if self.dim == "horizontal":
+            return [((x0, other_coord), (x1, other_coord)) for x0, x1 in line_endpoints]
         else:
-            return [
-                ((other_coord, y0), (other_coord, y1)) for y0, y1 in line_endpoints
-            ]
+            return [((other_coord, y0), (other_coord, y1)) for y0, y1 in line_endpoints]
 
     def get_lines(self, key):
         return self._make_lines(key, self.lines[key])
@@ -38,15 +34,20 @@ class LineStore:
             for line in self.get_lines(k)
         ]
 
-    def add(self, line: Tuple[Union[Tuple[int, int], pygame.math.Vector2],
-                              Union[Tuple[int, int], pygame.math.Vector2]]):
+    def add(
+        self,
+        line: Tuple[
+            Union[Tuple[int, int], pygame.math.Vector2],
+            Union[Tuple[int, int], pygame.math.Vector2],
+        ],
+    ):
         """Add a line segment to this LineStore.
 
         The line segment is not checked whether its direction (horizontal or vertical)
         matches the type of the LineStore. Expect weird results when you place a horizontal
         line in a 'vertical' LineStore or vice versa.
         """
-        if self.dim == 'horizontal':
+        if self.dim == "horizontal":
             key = line[0][1]  # index by y coordinate
             value = (line[0][0], line[1][0])  # store x_0 and x_1
         else:
@@ -88,7 +89,9 @@ def simplify_one_coord(coords):
     # If - after this operation - two consecutive line segments do not overlap, there is a true gap.
     line_old = lines[0]  # get first element
     for line in lines:
-        if line_old[1] < line[0]:  # disjoint ==> save line_old and continue with current line segment
+        if (
+            line_old[1] < line[0]
+        ):  # disjoint ==> save line_old and continue with current line segment
             result.append(line_old)
             line_old = line
         else:  # overlapping ==> join lines and continue with merged line segment
@@ -98,11 +101,13 @@ def simplify_one_coord(coords):
     return result
 
 
-def decompose_rects(*rects: pygame.Rect,
-                    horizontals: Optional[LineStore] = None,
-                    verticals: Optional[LineStore] = None):
-    horizontals = horizontals or LineStore(dim='horizontal')
-    verticals = verticals or LineStore(dim='vertical')
+def decompose_rects(
+    *rects: pygame.Rect,
+    horizontals: Optional[LineStore] = None,
+    verticals: Optional[LineStore] = None
+):
+    horizontals = horizontals or LineStore(dim="horizontal")
+    verticals = verticals or LineStore(dim="vertical")
     for r in rects:
         # We insert each side so that it runs from left to right or top to bottom
         # (x_start <= x_end && y_start <= y_end)
@@ -115,11 +120,13 @@ def decompose_rects(*rects: pygame.Rect,
     return horizontals, verticals
 
 
-def decompose_polyline(polyline,
-                       horizontals: Optional[LineStore] = None,
-                       verticals: Optional[LineStore] = None):
-    horizontals = horizontals or LineStore(dim='horizontal')
-    verticals = verticals or LineStore(dim='vertical')
+def decompose_polyline(
+    polyline,
+    horizontals: Optional[LineStore] = None,
+    verticals: Optional[LineStore] = None,
+):
+    horizontals = horizontals or LineStore(dim="horizontal")
+    verticals = verticals or LineStore(dim="vertical")
     for p0, p1 in polyline2linesegments(polyline):
         if p0[0] == p1[0]:  # same x coordinate: vertical line
             verticals.add((p0, p1))
@@ -152,15 +159,15 @@ def line_intersect(line, linestore: LineStore, ignore=None):
     x_start, y_start = line[0]
     x_end, y_end = line[1]
     if y_start == y_end:
-        mode = 'horizontal'
+        mode = "horizontal"
         x_start, x_end = sorted((x_start, x_end))
     elif x_start == x_end:
-        mode = 'vertical'
+        mode = "vertical"
         y_start, y_end = sorted((y_start, y_end))
     else:
         raise ValueError("line_intersect can only check horizontal and vertical lines")
 
-    if mode == 'horizontal' and linestore.dim == 'horizontal':
+    if mode == "horizontal" and linestore.dim == "horizontal":
         lines = linestore.get_lines(y_start)
         for curr_l in lines:
             x0, x1 = sorted((curr_l[0][0], curr_l[1][0]))
@@ -171,7 +178,7 @@ def line_intersect(line, linestore: LineStore, ignore=None):
             elif i_x0 < i_x1:
                 return (i_x0, y_start), (i_x1, y_start)
 
-    if mode == 'vertical' and linestore.dim == 'vertical':
+    if mode == "vertical" and linestore.dim == "vertical":
         lines = linestore.get_lines(x_start)
         for curr_l in lines:
             y0, y1 = sorted((curr_l[0][1], curr_l[1][1]))
@@ -182,7 +189,7 @@ def line_intersect(line, linestore: LineStore, ignore=None):
             if i_y0 < i_y1:
                 return (x_start, i_y0), (x_start, i_y1)
 
-    if mode == 'horizontal' and linestore.dim == 'vertical':
+    if mode == "horizontal" and linestore.dim == "vertical":
         y_coord = y_start
         for x_coord in range(x_start, x_end + 1):
             lines = linestore.get_lines(x_coord)
@@ -191,7 +198,7 @@ def line_intersect(line, linestore: LineStore, ignore=None):
                 if y0 <= y_coord <= y1 and (x_coord, y_coord) != ignore:
                     return x_coord, y_coord
 
-    if mode == 'vertical' and linestore.dim == 'horizontal':
+    if mode == "vertical" and linestore.dim == "horizontal":
         x_coord = x_start
         for y_coord in range(y_start, y_end + 1):
             lines = linestore.get_lines(y_coord)

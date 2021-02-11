@@ -1,14 +1,22 @@
 import pygame
 import pytest
 
-from paths import lines_with_point, point_is_on_line, split_line_at_point, orientation, find_path
+from paths import (
+    lines_with_point,
+    point_is_on_line,
+    split_line_at_point,
+    orientation,
+    find_path,
+)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def boundary_rectangular():
     b = [
-        (0, 0), (0, 50),
-        (40, 50), (40, 0),
+        (0, 0),
+        (0, 50),
+        (40, 50),
+        (40, 0),
         (0, 0),
     ]
     yield list(zip(b, b[1:]))
@@ -55,7 +63,7 @@ def test_lines_with_point1():
         ((0, 0), (0, 50)),
         ((0, 50), (40, 50)),
         ((40, 50), (40, 0)),
-        ((40, 0), (0, 0))
+        ((40, 0), (0, 0)),
     ]
     the_point = (0, 20)
     lines = lines_with_point(all_lines, the_point)
@@ -68,7 +76,7 @@ def test_lines_with_point2():
         ((0, 0), (0, 50)),
         ((0, 50), (40, 50)),
         ((40, 50), (40, 0)),
-        ((40, 0), (0, 0))
+        ((40, 0), (0, 0)),
     ]
     the_point = (0, 50)
     lines = lines_with_point(all_lines, the_point)
@@ -154,34 +162,30 @@ def test_cross():
 
 
 def test_find_path_prequel(boundary_rectangular):
-    stix_as_lines = [((0, 20), (20, 20)),
-                     ((20, 20), (20, 30)),
-                     ((20, 30), (0, 30))
-                     ]
+    stix_as_lines = [((0, 20), (20, 20)), ((20, 20), (20, 30)), ((20, 30), (0, 30))]
     closed = [
         ((0, 20), (20, 20)),
         ((20, 20), (20, 30)),
         ((20, 30), (0, 30)),
-        ((0, 30), (0, 20))
+        ((0, 30), (0, 20)),
     ]
     starting_line = stix_as_lines[-1]
     first_line = lines_with_point(boundary_rectangular, starting_line[1])[0]
     assert first_line == ((0, 0), (0, 50))
     splits = split_line_at_point(first_line, starting_line[1])
     assert splits == [((0, 30), (0, 0)), ((0, 30), (0, 50))]
-    assert (orientation(starting_line, splits[0]) > 0
-            or orientation(starting_line, splits[1]) > 0)
+    assert (
+        orientation(starting_line, splits[0]) > 0
+        or orientation(starting_line, splits[1]) > 0
+    )
 
 
 def test_find_path(boundary_rectangular):
-    stix_as_lines = [((0, 20), (20, 20)),
-                     ((20, 20), (20, 30)),
-                     ((20, 30), (0, 30))
-                     ]
+    stix_as_lines = [((0, 20), (20, 20)), ((20, 20), (20, 30)), ((20, 30), (0, 30))]
     closed = [
         ((0, 20), (20, 20)),
         ((20, 20), (20, 30)),
         ((20, 30), (0, 30)),
-        ((0, 30), (0, 20))
+        ((0, 30), (0, 20)),
     ]
     assert find_path(boundary_rectangular, stix_as_lines) == closed

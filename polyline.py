@@ -78,9 +78,11 @@ class Polyline:
         sub_path = list(sub_path)
         start, end = self._splicepoints(sub_path)
         if start < end:
-            points = self.points[:start] + sub_path + self.points[end + 1:]
+            points = self.points[:start] + sub_path + self.points[end + 1 :]
         else:
-            raise ValueError("Cannot replace a segment of original in reverse direction")
+            raise ValueError(
+                "Cannot replace a segment of original in reverse direction"
+            )
         return self.__class__(*points)
 
     def intersect(self, line):
@@ -110,9 +112,9 @@ class ClosedPolyline(Polyline):
         sub_path = list(sub_path)
         start, end = self._splicepoints(sub_path)
         if start < end:
-            points = self.points[:start] + sub_path + self.points[end + 1:]
+            points = self.points[:start] + sub_path + self.points[end + 1 :]
         else:
-            points = sub_path + self.points[end + 1:start]
+            points = sub_path + self.points[end + 1 : start]
         return self.__class__(*points)
 
     def split(self, sub_path):
@@ -127,8 +129,7 @@ class ClosedPolyline(Polyline):
         but the calculation may work für negative x's, too. I just have not checked.
         """
         # add up rectangles left and right of vertical edges:
-        area = sum(p[0] * (q[1] - p[1])
-                   for p, q in self.line_segments())
+        area = sum(p[0] * (q[1] - p[1]) for p, q in self.line_segments())
         return area
 
     def surrounds(self, point):
@@ -147,4 +148,6 @@ class ClosedPolyline(Polyline):
 
 
 def rect2poly(rect: pygame.Rect):
-    return ClosedPolyline(rect.topleft, rect.topright, rect.bottomright, rect.bottomleft)
+    return ClosedPolyline(
+        rect.topleft, rect.topright, rect.bottomright, rect.bottomleft
+    )

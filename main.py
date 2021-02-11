@@ -6,8 +6,20 @@ import pygame
 from acrylic import Color
 
 from polyline import ClosedPolyline, rect2poly
-from common import WIDTH, HEIGHT, LEFTMARGIN, RIGHTMARGIN, TOPMARGIN, BOTTOMMARGIN, TRAIL_LENGTH, \
-    PLAYER_SPEED, key_map, directions, QIX_SPEED, CLOSE_AREA
+from common import (
+    WIDTH,
+    HEIGHT,
+    LEFTMARGIN,
+    RIGHTMARGIN,
+    TOPMARGIN,
+    BOTTOMMARGIN,
+    TRAIL_LENGTH,
+    PLAYER_SPEED,
+    key_map,
+    directions,
+    QIX_SPEED,
+    CLOSE_AREA,
+)
 from linestore import LineStore, line_intersect, decompose_polyline
 from paths import point_is_on_line
 
@@ -15,8 +27,6 @@ clock = pygame.time.Clock()
 
 
 def randvec2(max_x, max_y=None, min_x=None, min_y=None):
-    if max_y is None:
-        max_y = max_x
     if max_y is None:
         max_y = max_x
     if min_x is None:
@@ -32,12 +42,15 @@ class Qix:
     def __init__(self, screen, boundary=None):
         self.screen = screen
         self.boundary = boundary or rect2poly(screen.get_rect())
-        self.a_s = deque([randvec2(min_x=0, max_x=WIDTH, min_y=0, max_y=HEIGHT)],
-                         maxlen=TRAIL_LENGTH)
-        self.b_s = deque([randvec2(min_x=0, max_x=WIDTH, min_y=0, max_y=HEIGHT)],
-                         maxlen=TRAIL_LENGTH)
-        self.color_s = deque([Color(hsv=[random() * 360.0, 100.0, 100.0])],
-                             maxlen=TRAIL_LENGTH)
+        self.a_s = deque(
+            [randvec2(min_x=0, max_x=WIDTH, min_y=0, max_y=HEIGHT)], maxlen=TRAIL_LENGTH
+        )
+        self.b_s = deque(
+            [randvec2(min_x=0, max_x=WIDTH, min_y=0, max_y=HEIGHT)], maxlen=TRAIL_LENGTH
+        )
+        self.color_s = deque(
+            [Color(hsv=[random() * 360.0, 100.0, 100.0])], maxlen=TRAIL_LENGTH
+        )
         self.va = randvec2(10)
         self.vb = randvec2(10)
         self.omega = randint(5, 20)  # angular velocity on the colour wheel
@@ -97,7 +110,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = border.midbottom
         # print(type(self.rect.center))
         self.speed = PLAYER_SPEED
-        self.direction = 'standstill'
+        self.direction = "standstill"
         self.standstill = True
         self.border = border
         self.boundary = rect2poly(border)
@@ -154,7 +167,7 @@ class Player(pygame.sprite.Sprite):
         #     check horizontal safe lines near current position
         # if old direction is 'left' or 'right':
         #     check vertical safe lines near current position
-        self.standstill = direction == 'standstill'
+        self.standstill = direction == "standstill"
         if not self.standstill:
             dir_changed = self.direction != direction
             self.direction = direction
@@ -164,10 +177,12 @@ class Player(pygame.sprite.Sprite):
                 print("Move executed\n")
                 if dir_changed:
                     self.stix.append(self.rect.center)
-                    if any(point_is_on_line(self.rect.center, line_segment)
-                           for line_segment in self.boundary.line_segments()):
+                    if any(
+                        point_is_on_line(self.rect.center, line_segment)
+                        for line_segment in self.boundary.line_segments()
+                    ):
                         pygame.event.post(
-                            pygame.event.Event(CLOSE_AREA, {'polyline': self.stix})
+                            pygame.event.Event(CLOSE_AREA, {"polyline": self.stix})
                         )
                 else:
                     self.stix[-1] = self.rect.center
@@ -204,15 +219,15 @@ class QixGame:
         self.border.y += TOPMARGIN
         self.border.width -= LEFTMARGIN + RIGHTMARGIN + 1
         self.border.height -= TOPMARGIN + BOTTOMMARGIN + 1
-        self.safe_horizontals = LineStore('horizontal')
-        self.safe_verticals = LineStore('vertical')
-        self.unsafe_horizontals = LineStore('horizontal')
-        self.unsafe_verticals = LineStore('vertical')
+        self.safe_horizontals = LineStore("horizontal")
+        self.safe_verticals = LineStore("vertical")
+        self.unsafe_horizontals = LineStore("horizontal")
+        self.unsafe_verticals = LineStore("vertical")
         self.paths = {
-            'safe_horizontals': self.safe_horizontals,
-            'safe_verticals': self.safe_verticals,
-            'unsafe_horizontals': self.unsafe_horizontals,
-            'unsafe_verticals': self.unsafe_verticals,
+            "safe_horizontals": self.safe_horizontals,
+            "safe_verticals": self.safe_verticals,
+            "unsafe_horizontals": self.unsafe_horizontals,
+            "unsafe_verticals": self.unsafe_verticals,
         }
         bounds = self.border.copy()
         bounds.width -= 1
@@ -226,9 +241,7 @@ class QixGame:
         # Only one Stix polyline can exist at any one time
         self.stix = []  # keep track of unfinished player track
         self.qix = Qix(self.screen, self.boundary_open)
-        self.player = pygame.sprite.Group(Player(bounds,
-                                                 self.boundary_open,
-                                                 self.stix))
+        self.player = pygame.sprite.Group(Player(bounds, self.boundary_open, self.stix))
         self.score = 0
         self.percentage = 0
 
@@ -279,7 +292,7 @@ class QixGame:
 
     def mainloop(self):
         done = False
-        player_dir = 'standstill'
+        player_dir = "standstill"
         while not done:
             self.draw_screen()
             self.qix.show()
@@ -289,12 +302,14 @@ class QixGame:
                     done = True
                 elif event.type == CLOSE_AREA:
                     self.close_area(event)
-                elif event.type == pygame.KEYUP and player_dir == key_map.get(event.key, 'standstill'):
+                elif event.type == pygame.KEYUP and player_dir == key_map.get(
+                    event.key, "standstill"
+                ):
                     # If the player is not pressing the key for the current direction, we have to stop
-                    player_dir = 'standstill'
+                    player_dir = "standstill"
                     # TODO: Start timer for fuse
                 elif event.type == pygame.KEYDOWN:
-                    player_dir = key_map.get(event.key, 'standstill')
+                    player_dir = key_map.get(event.key, "standstill")
             # print(player_dir)
             dt = clock.tick(20)
             self.qix.move(dt)
@@ -310,7 +325,7 @@ class QixGame:
         pygame.draw.rect(self.screen, (150, 100, 10), self.border, width=1)
         for poly in self.boundary_closed:
             pygame.draw.polygon(self.screen, (0x40, 0x40, 0x80), points=poly.points)
-            pygame.draw.polygon(self.screen, (0xc0, 0xc0, 0xc0), points=poly.points)
+            pygame.draw.polygon(self.screen, (0xC0, 0xC0, 0xC0), points=poly.points)
         self.draw_stix()
         self.player.draw(self.screen)
 
@@ -324,5 +339,5 @@ def run_game():
     pygame.quit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run_game()
