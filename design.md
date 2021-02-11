@@ -21,6 +21,48 @@
 ### move onto boundary
 + clamp to boundary
 
+### Allowed Moves
+
+Assuming boundary is always stored in clockwise direction, a right turn off the boundary 
+is allowed and a left turn off the boundary is forbidden.  This allows us to use the 
+cross product of the boundary segment with the movement vector to determine if the 
+movement vector represents a permitted move.
+
+When the player is on the boundary, the following cases can occur:
+1. move along boundary (clockwise or counterclockwise) staying on the same segment
+2. move along boundary (clockwise or counterclockwise) but leaving the current segment
+3. move off the boundary (left or right)
+
+#### Case 1
+
+`m_dir x b_dir == 0` and 
+target position is on current line segment
+
+#### Case 2
+
+`m_dir x b_dir == 0` and 
+target position is not on current line segment
+
+Position player at end point of current segment, shorten the movement by the 
+distance travelled, then take the next segment (in the direction of movement) 
+and check the remainder of the movement vector against that part of the boundary.
+(Back to the start of this algorithm.)
+
+#### Case 3
+
+In this case we compare the direction of movement with the direction of the boundary:
+
+    if m_dir x b_dir < 0:
+        allowed
+    else:
+        not allowed
+    # TODO: verify that the sign check is the right way round
+
+#### Conclusion
+
+A move will be carried out as long as the above checks find the move(s) allowed.
+As soon as there is a disallowed move, the player is stopped.
+
 ### move onto Stix
 + not allowed: abandon move
 
